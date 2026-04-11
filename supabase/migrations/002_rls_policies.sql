@@ -1,0 +1,27 @@
+-- Ejecutar DESPUÉS del schema
+ALTER TABLE centros ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cursos_escolares ENABLE ROW LEVEL SECURITY;
+ALTER TABLE alumnos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE docente_alumno ENABLE ROW LEVEL SECURITY;
+ALTER TABLE horarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE registro_diario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asesor_centros ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admin_gestor_centros" ON centros FOR ALL USING (get_my_role() IN ('admin','gestor')) WITH CHECK (get_my_role() IN ('admin','gestor'));
+CREATE POLICY "otros_select_centros" ON centros FOR SELECT USING (get_my_role() IN ('coordinador','asesor','docente'));
+CREATE POLICY "admin_all_usuarios" ON usuarios FOR ALL USING (get_my_role()='admin') WITH CHECK (get_my_role()='admin');
+CREATE POLICY "gestor_select_usuarios" ON usuarios FOR SELECT USING (get_my_role()='gestor');
+CREATE POLICY "self_select_usuario" ON usuarios FOR SELECT USING (auth_id=auth.uid());
+CREATE POLICY "admin_gestor_coord_cursos" ON cursos_escolares FOR ALL USING (get_my_role() IN ('admin','gestor','coordinador')) WITH CHECK (get_my_role() IN ('admin','gestor','coordinador'));
+CREATE POLICY "otros_select_cursos" ON cursos_escolares FOR SELECT USING (get_my_role() IN ('asesor','docente'));
+CREATE POLICY "admin_gestor_coord_alumnos" ON alumnos FOR ALL USING (get_my_role() IN ('admin','gestor','coordinador')) WITH CHECK (get_my_role() IN ('admin','gestor','coordinador'));
+CREATE POLICY "asesor_select_alumnos" ON alumnos FOR SELECT USING (get_my_role()='asesor');
+CREATE POLICY "docente_select_alumnos" ON alumnos FOR SELECT USING (get_my_role()='docente' AND id IN (SELECT alumno_id FROM docente_alumno WHERE docente_id=(SELECT id FROM usuarios WHERE auth_id=auth.uid())));
+CREATE POLICY "admin_gestor_coord_docente_alumno" ON docente_alumno FOR ALL USING (get_my_role() IN ('admin','gestor','coordinador')) WITH CHECK (get_my_role() IN ('admin','gestor','coordinador'));
+CREATE POLICY "docente_select_docente_alumno" ON docente_alumno FOR SELECT USING (get_my_role()='docente' AND docente_id=(SELECT id FROM usuarios WHERE auth_id=auth.uid()));
+CREATE POLICY "admin_gestor_coord_horarios" ON horarios FOR ALL USING (get_my_role() IN ('admin','gestor','coordinador')) WITH CHECK (get_my_role() IN ('admin','gestor','coordinador'));
+CREATE POLICY "docente_select_horarios" ON horarios FOR SELECT USING (get_my_role()='docente' AND docente_id=(SELECT id FROM usuarios WHERE auth_id=auth.uid()));
+CREATE POLICY "admin_gestor_coord_asesor_select_registros" ON registro_diario FOR SELECT USING (get_my_role() IN ('admin','gestor','coordinador','asesor'));
+CREATE POLICY "docente_all_registros" ON registro_diario FOR ALL USING (get_my_role()='docente' AND docente_id=(SELECT id FROM usuarios WHERE auth_id=auth.uid())) WITH CHECK (get_my_role()='docente' AND docente_id=(SELECT id FROM usuarios WHERE auth_id=auth.uid()));
+CREATE POLICY "admin_gestor_asesor_centros" ON asesor_centros FOR ALL USING (get_my_role() IN ('admin','gestor')) WITH CHECK (get_my_role() IN ('admin','gestor'));
+CREATE POLICY "asesor_select_asesor_centros" ON asesor_centros FOR SELECT USING (get_my_role()='asesor' AND asesor_id=(SELECT id FROM usuarios WHERE auth_id=auth.uid()));
